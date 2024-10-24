@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from collections import deque
 
@@ -167,6 +166,21 @@ def build_tree(scene):
     return root
 
 
+
+def deterministic_bfs(root, effective_time_limit):
+    queue = deque()
+    queue.append(root)
+    visited = []
+    time_spent = 0
+    while queue and time_spent < effective_time_limit:
+        node = queue.popleft()
+        if not node.is_dummy:
+            visited.append(node.name)
+        time_spent += 1
+        for child in node.children:
+            queue.append(child)
+    return visited
+
 def deterministic_dfs(node, effective_time_limit, visited=None, time_spent=0):
     if visited is None:
         visited = []
@@ -181,39 +195,20 @@ def deterministic_dfs(node, effective_time_limit, visited=None, time_spent=0):
         visited, time_spent = deterministic_dfs(child, effective_time_limit, visited, time_spent)
     return visited, time_spent
 
-def deterministic_bfs(root, effective_time_limit):
-    queue = deque()
-    visited = []
-    time_spent = 0
-    queue.append(root)
-    while queue and time_spent < effective_time_limit:
-        node = queue.popleft()
-        if not node.is_dummy:
-            visited.append(node.name)
-        time_spent += 1
-        for child in node.children:
-            queue.append(child)
-    return visited
-
-
 def probabilistic_bfs(root, effective_time_limit, expansion_prob):
-    from collections import deque
     queue = deque()
+    queue.append(root)
     visited = []
     time_spent = 0
-    queue.append(root)
     while queue and time_spent < effective_time_limit:
         node = queue.popleft()
         if not node.is_dummy:
             visited.append(node.name)
         time_spent += 1
         for child in node.children:
-            if time_spent >= effective_time_limit:
-                break
-            if torch.rand(1) < expansion_prob:
+            if np.random.rand() < expansion_prob:
                 queue.append(child)
     return visited
-
 
 def probabilistic_dfs(node, effective_time_limit, expansion_prob, visited=None, time_spent=0):
     if visited is None:
@@ -226,6 +221,9 @@ def probabilistic_dfs(node, effective_time_limit, expansion_prob, visited=None, 
     for child in node.children:
         if time_spent >= effective_time_limit:
             break
-        if torch.rand(1) < expansion_prob:
+        if np.random.rand() < expansion_prob:
             visited, time_spent = probabilistic_dfs(child, effective_time_limit, expansion_prob, visited, time_spent)
     return visited, time_spent
+
+
+

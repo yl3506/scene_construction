@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def load_data(file_path):
+def load_data(file_path='/Users/yichen/Downloads/scene_construction/version6_pilot1_cleaned.csv'):
     # Load your data from a CSV file
     data = pd.read_csv(file_path)
     return data
@@ -19,16 +19,15 @@ def preprocess_data(data):
     scaling_factor_mapping = {'250ms': 1, '500ms': 2, '1000ms': 4, '2000ms': 8}
     data['ScalingFactor'] = data['condition'].map(scaling_factor_mapping)
 
-    # Set Default Effective Time Limit
-    default_effective_time_limit = 5  # As per your specification
-
-    # Assume default Cognitive Resource if not present (to be fitted later)
-    data['CognitiveResource'] = 1.0  # Default value; will be fitted per participant
+    # Set Default number of nodes that can be expanded (scales with duration allowed)
+    base_time_limit = 1.0
 
     # Effective Time Limit will be calculated during model fitting using the parameters
 
     # Prepare properties per scene
     scene_properties_mapping = {
+    # scene: 
+    #   {property name: (column for yes-property, column for yes-rank, column for no-property, short name for this property)}
         'Drop':{
           'The location of the dropped thing relative to the other thing (e.g. to the left/right/front/back)':
               ('DropQ_0_GROUP_1', 'DropQ_0_1_RANK', 'DropQ_1_GROUP_1', 'loc(s1, s2)'),
@@ -103,7 +102,6 @@ def preprocess_data(data):
         participant_id = row['ParticipantID']
         scene = row['scene']
         scaling_factor = row['ScalingFactor']
-        cognitive_resource = row['CognitiveResource']  # To be fitted later
 
         # Get properties mapping for the participant's scene
         properties_mapping = scene_properties_mapping[scene]
@@ -141,8 +139,7 @@ def preprocess_data(data):
             'ParticipantID': participant_id,
             'Scene': scene,
             'ScalingFactor': scaling_factor,
-            'CognitiveResource': cognitive_resource,  # Will be updated during fitting
-            'DefaultEffectiveTimeLimit': default_effective_time_limit,
+            'BaseTimeLimit': base_time_limit,
             'Properties': property_short_names,
         }
 
